@@ -1,0 +1,16 @@
+[project]
+name = "uber-analisys"
+version = "0.1.0"
+description = "Este projeto destina-se à análise de dados de corridas da Uber, seguindo o desafio técnico descrito em docs/PROJECT DOCUMENTATION.md."
+authors = [
+    {name = "Joao Pedro Santos",email = "jpedro.csantos@hotmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
