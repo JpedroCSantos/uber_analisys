@@ -165,6 +165,9 @@ cython_debug/
 # VSCode
 .vscode/
 
+#LOGS
+logs/
+
 ### Python Patch ###
 # Poetry local configuration file - https://python-poetry.org/docs/configuration/#local-configuration
 poetry.toml
