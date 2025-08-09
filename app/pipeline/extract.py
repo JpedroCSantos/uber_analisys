@@ -1,24 +1,8 @@
-import pandas as pd
-from loguru import logger
-import functools
 import os
-
-# Limpa qualquer configuração prévia e adiciona uma nova para o console
-logger.remove() 
-logger.add(
-    os.sys.stderr, # Manda para o console
-    level="INFO"
-)
-
-# Adiciona um "sink" para um arquivo de log, com rotação.
-logger.add(
-    "logs/meu_projeto_dados.log", # O arquivo de log
-    level="INFO",
-    rotation="10 MB",
-    retention="7 days",
-    format="{time:YYYY-MM-DD HH:mm:ss.SSS} | {level: <8} | {name}:{function}:{line} - {message}"
-)
-# -------------------------------------------------------------------------------------------------
+import functools
+import pandas as pd
+from typing import Optional, List
+from loguru import logger
 
 def handle_io_errors(func):
     @functools.wraps(func)
@@ -58,27 +42,21 @@ def getDataInCsv(path: str, file_name: str, delimiter: str = ";", encoding: str 
     return df
 
 @handle_io_errors
-def getDataInParquet(path: str, file_name: str) -> pd.DataFrame:
+def getDataInParquet(path: str, file_name: str, columns: Optional[List[str]] = None) -> pd.DataFrame:
     """
-    Lê um arquivo CSV de um caminho especificado e o retorna como um DataFrame do Pandas.
+    Lê um arquivo Parquet de um caminho especificado e o retorna como um DataFrame do Pandas.
 
     Args:
         path (str): O caminho do diretório onde o arquivo está localizado.
-        file_name (str): O nome do arquivo (sem a extensão .csv).
-        delimiter (str, optional): O delimitador do CSV. Defaults to ";".
-        encoding (str, optional): A codificação do arquivo. Defaults to "utf-8".
+        file_name (str): O nome do arquivo (sem a extensão .parquet).
 
     Returns:
         pd.DataFrame: Um DataFrame do Pandas contendo os dados do arquivo.
     """
-    if file_name.endswith('.parquet'):
-        base_name = file_name.removesuffix('.parquet')
-    else:
-        base_name = file_name
-
+    base_name = file_name[:-8] if file_name.endswith('.parquet') else file_name
     full_path = os.path.join(path, f"{base_name}.parquet")
     logger.info(f"Iniciando leitura do arquivo: {full_path}")
-    df = pd.read_parquet(full_path)
+    df = pd.read_parquet(full_path, columns=columns)
     logger.success(f"Arquivo '{full_path}' lido com sucesso. Shape: {df.shape}")
 
     return df
