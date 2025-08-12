@@ -2,7 +2,7 @@ import pandas as pd
 import functools
 import os
 from loguru import logger
-from pipeline.config import Settings
+from config.config import Settings
 
 def handle_io_errors(func):
     @functools.wraps(func)
@@ -122,10 +122,11 @@ def insert_new_columns(df: pd.DataFrame) -> pd.DataFrame:
     """
     logger.info(f"Iniciando inserção de novas colunas.")
     df['duration_minutes'] = (
-        df['tpep_dropoff_datetime'] - df['tpep_pickup_datetime']
-    ).astype('float32').dt.total_seconds() / 60
-    df['hour_of_day'] = df['tpep_pickup_datetime'].dt.hour.astype('UInt8')
-    df['day_of_week'] = df['tpep_pickup_datetime'].dt.dayofweek 
+        (df['tpep_dropoff_datetime'] - df['tpep_pickup_datetime'])
+        .dt.total_seconds() / 60.0
+    ).astype('float32').where(lambda s: s > 0)
+    df['hour_of_day'] = df['tpep_pickup_datetime'].dt.hour.astype('Int64')
+    df['day_of_week'] = df['tpep_pickup_datetime'].dt.dayofweek.astype('Int64')
     logger.success(f"Colunas inseridas com sucesso.")
 
     return df

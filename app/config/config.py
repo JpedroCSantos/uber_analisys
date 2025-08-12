@@ -39,7 +39,7 @@ class Settings:
         "improvement_surcharge": "float32",
         "total_amount": "float32",
         "congestion_surcharge": "float32",
-        "airport_fee": "float32",
+        "Airport_fee": "float32",
     })
 
     # Qualidade de dados
@@ -47,7 +47,7 @@ class Settings:
         "tpep_pickup_datetime", "tpep_dropoff_datetime", "PULocationID", "DOLocationID"
     ])
     amount_columns: List[str] = field(default_factory=lambda: [
-        "fare_amount", "extra", "mta_tax", "tip_amount", "tolls_amount", "airport_fee",
+        "fare_amount", "extra", "mta_tax", "tip_amount", "tolls_amount", "Airport_fee",
         "improvement_surcharge", "total_amount", "congestion_surcharge"
     ])
 

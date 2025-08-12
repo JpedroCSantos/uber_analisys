@@ -1,7 +1,7 @@
 from loguru import logger
-from pipeline.config import settings
-from pipeline.logging import configure_logging
-from pipeline.extract import getDataInCsv, getDataInParquet
+from config.config import settings
+from config.logging import configure_logging
+from pipeline.extract import getDataInParquet
 from pipeline.transform import (remove_nan_values_in_columns, get_columns_with_nan, 
                                 treat_critical_columns, treat_critical_values, 
                                 insert_new_columns)
@@ -16,3 +16,6 @@ emptyColumns = get_columns_with_nan(df=df)
 df = remove_nan_values_in_columns(coluns=emptyColumns, df=df)
 
 logger.info(f"Shape: {df.shape}")
+
+
+
