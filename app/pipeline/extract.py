@@ -21,7 +21,7 @@ def handle_io_errors(func):
     return wrapper
 
 @handle_io_errors
-def getDataInCsv(path: str, file_name: str, delimiter: str = ";", encoding: str = "utf-8") -> pd.DataFrame:
+def get_data_in_csv(path: str, file_name: str, delimiter: str = ";", encoding: str = "utf-8") -> pd.DataFrame:
     """
     Lê um arquivo CSV de um caminho especificado e o retorna como um DataFrame do Pandas.
 
@@ -42,7 +42,7 @@ def getDataInCsv(path: str, file_name: str, delimiter: str = ";", encoding: str 
     return df
 
 @handle_io_errors
-def getDataInParquet(path: str, file_name: str, columns: Optional[List[str]] = None) -> pd.DataFrame:
+def get_data_in_parquet(path: str, file_name: str, columns: Optional[List[str]] = None) -> pd.DataFrame:
     """
     Lê um arquivo Parquet de um caminho especificado e o retorna como um DataFrame do Pandas.
 

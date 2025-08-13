@@ -57,6 +57,38 @@ class Settings:
     pg_user: str = field(default_factory=lambda: os.getenv("PG_USER", "postgres"))
     pg_password: str = field(default_factory=lambda: os.getenv("PG_PASSWORD", "postgres"))
     pg_database: str = field(default_factory=lambda: os.getenv("PG_DATABASE", "uber"))
+    
+    # Arquitetura Medallion - Caminhos de saída
+    output_path: str = field(default_factory=lambda: os.getenv("OUTPUT_PATH", "data/output"))
+    bronze_path: str = field(default_factory=lambda: os.getenv("BRONZE_PATH", "data/output/bronze"))
+    silver_path: str = field(default_factory=lambda: os.getenv("SILVER_PATH", "data/output/silver"))
+    gold_path: str = field(default_factory=lambda: os.getenv("GOLD_PATH", "data/output/gold"))
+    
+    # Configurações de arquivo
+    filename: str = field(default_factory=lambda: os.getenv("FILENAME", "uber_data"))
+    delimiter: str = field(default_factory=lambda: os.getenv("DELIMITER", ","))
+    
+    # Configurações de qualidade por camada
+    bronze_quality: Dict[str, any] = field(default_factory=lambda: {
+        "validation_level": "basic",
+        "required_columns": ["tpep_pickup_datetime", "tpep_dropoff_datetime"],
+        "allow_duplicates": True
+    })
+    
+    silver_quality: Dict[str, any] = field(default_factory=lambda: {
+        "validation_level": "intermediate",
+        "required_columns": ["tpep_pickup_datetime", "tpep_dropoff_datetime", "PULocationID", "DOLocationID"],
+        "allow_duplicates": False,
+        "null_threshold": 0.1
+    })
+    
+    gold_quality: Dict[str, any] = field(default_factory=lambda: {
+        "validation_level": "strict",
+        "required_columns": ["tpep_pickup_datetime", "tpep_dropoff_datetime", "PULocationID", "DOLocationID", "total_amount"],
+        "allow_duplicates": False,
+        "null_threshold": 0.0,
+        "business_rules": ["positive_amounts", "valid_coordinates"]
+    })
 
 load_env()
 settings = Settings()
