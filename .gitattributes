@@ -1,0 +1,6 @@
+# Define o comportamento padrão para todos os arquivos de texto
+* text=auto
+
+# Força arquivos Python a sempre usarem LF no repositório
+*.py text eol=lf
+*.sh text eol=lf
