@@ -172,6 +172,8 @@ logs/
 #input_files
 data/input/
 data/input/*
+data/output/
+data/output/*
 
 ### Python Patch ###
 # Poetry local configuration file - https://python-poetry.org/docs/configuration/#local-configuration
