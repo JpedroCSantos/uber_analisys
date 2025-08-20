@@ -2,6 +2,8 @@ import os
 import json
 import functools
 import pandas as pd
+
+from loguru import logger
 from typing import List, Literal
 from config.config import Settings
 
@@ -12,7 +14,7 @@ def handle_io_errors(func):
             return func(*args, **kwargs)
         except Exception as e:
             logger.exception("ERRO INESPERADO: Uma falha não prevista ocorreu durante a execução.", backtrace=False)
-            raise e
+            # raise e
     return wrapper
 
 def load_csv(data_frame: pd.DataFrame, config: Settings, layer: Literal["bronze", "silver", "gold"] = "bronze") -> str:
@@ -39,18 +41,15 @@ def load_csv(data_frame: pd.DataFrame, config: Settings, layer: Literal["bronze"
     
     logger.info(f"Salvando arquivo CSV na camada {layer.upper()} em {output_path}/{config.filename}_{layer}.csv")
     
-    # Cria o diretório se não existir
     if not os.path.exists(output_path):
         os.makedirs(output_path)
         logger.info(f"Diretório {output_path} criado com sucesso")
 
-    # Remove arquivo existente se houver
     file_path = f"{output_path}/{config.filename}_{layer}.csv"
     if os.path.exists(file_path):
         os.remove(file_path)
         logger.info(f"Arquivo existente removido: {file_path}")
 
-    # Salva o arquivo CSV
     data_frame.to_csv(file_path, index=False, sep=config.delimiter)
     logger.info(f"Arquivo CSV criado com sucesso na camada {layer.upper()}: {file_path}")
     

@@ -11,7 +11,7 @@ def handle_io_errors(func):
             return func(*args, **kwargs)
         except Exception as e:
             logger.exception("ERRO INESPERADO: Uma falha não prevista ocorreu durante a execução.", backtrace=False)
-            raise e
+            # raise e
     return wrapper
 
 @handle_io_errors
@@ -27,7 +27,7 @@ def get_columns_with_nan(df: pd.DataFrame) -> list:
     """
     logger.info(f"Iniciando contagem de valores NaN nas colunas do dataframe.")
     empty_columns = [colum for colum, value in df.isna().sum().items() if value > 0]
-    logger.info(f"Colunas com valores NaN: {empty_columns}")
+    # logger.info(f"Colunas com valores NaN: {empty_columns}")
 
     return empty_columns
 
@@ -44,7 +44,7 @@ def remove_nan_values_in_columns(coluns: list, df: pd.DataFrame) -> pd.DataFrame
     Returns:
         pd.DataFrame: Um DataFrame do Pandas contendo os dados processado.
     """
-    logger.info(f"Iniciando remoção de valores NaN nas colunas: {coluns}")
+    logger.info(f"Iniciando remoção de valores NaN")
     initialLen = len(df)
     df = df.dropna(subset=coluns)
     logger.success(f"Linhas removidas: {initialLen - len(df)}")
@@ -68,6 +68,7 @@ def treat_critical_columns(df: pd.DataFrame) -> pd.DataFrame:
         .map({'Y': True, 'N': False})
         .astype('boolean')
     )
+    
     logger.success(f"Colunas tratadas com sucesso.")
 
     return df
@@ -97,6 +98,11 @@ def treat_critical_values(df: pd.DataFrame, config: Settings) -> pd.DataFrame:
     df['duration_minutes'] = (
         pd.to_numeric(df['duration_minutes'], errors='coerce')
         .where(lambda s: s > 0)
+        .astype('float32')
+    )
+    df['trip_distance'] = (
+        pd.to_numeric(df['trip_distance'], errors='coerce')
+        .where(lambda s: (s >= 0) & (s <= config.max_trip_distance))
         .astype('float32')
     )
     for column in config.amount_columns:

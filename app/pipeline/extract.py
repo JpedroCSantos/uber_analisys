@@ -1,7 +1,9 @@
 import os
+import glob
 import functools
 import pandas as pd
-from typing import Optional, List
+
+from typing import Optional, List, Dict
 from loguru import logger
 
 def handle_io_errors(func):
@@ -11,17 +13,20 @@ def handle_io_errors(func):
             return func(*args, **kwargs)
         except FileNotFoundError as e:
             logger.exception("ERRO DE ARQUIVO: O arquivo ou diretório não foi encontrado.", backtrace=False)
-            raise FileNotFoundError("Falha na operação de I/O: arquivo não encontrado.") from e
+            # raise FileNotFoundError("Falha na operação de I/O: arquivo não encontrado.") from e
         except pd.errors.ParserError as e:
             logger.exception("ERRO DE PARSING: Verifique a estrutura do arquivo e os parâmetros de leitura.",backtrace=False)
-            raise Exception("Falha ao processar o arquivo.") from e
+            # raise Exception("Falha ao processar o arquivo.") from e
         except Exception as e:
             logger.exception("ERRO INESPERADO: Uma falha não prevista ocorreu durante a execução.", backtrace=False)
-            raise e
+            # raise e
     return wrapper
 
+def list_files(path: str) -> List[str]:
+    return [os.path.basename(p) for p in glob.glob(os.path.join(path, "*.parquet"))]
+
 @handle_io_errors
-def get_data_in_csv(path: str, file_name: str, delimiter: str = ";", encoding: str = "utf-8") -> pd.DataFrame:
+def get_data_in_csv(path: str, file_name: str, delimiter: str = ";", encoding: str = "utf-8", dtypes: Optional[Dict[str, str]] = None) -> pd.DataFrame:
     """
     Lê um arquivo CSV de um caminho especificado e o retorna como um DataFrame do Pandas.
 
@@ -36,7 +41,7 @@ def get_data_in_csv(path: str, file_name: str, delimiter: str = ";", encoding: s
     """
     full_path = os.path.join(path, f"{file_name}.csv")
     logger.info(f"Iniciando leitura do arquivo: {full_path}")
-    df = pd.read_csv(full_path, delimiter=delimiter, encoding=encoding)
+    df = pd.read_csv(full_path, delimiter=delimiter, encoding=encoding, dtype=dtypes)
     logger.success(f"Arquivo '{full_path}' lido com sucesso. Shape: {df.shape}")
 
     return df

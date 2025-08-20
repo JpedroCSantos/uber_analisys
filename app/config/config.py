@@ -12,7 +12,7 @@ class Settings:
     app_env: str = field(default_factory=lambda: (os.getenv("APP_ENV") or os.getenv("ENV") or "DEV").upper())
 
     # Caminhos e arquivos
-    data_dir: str = field(default_factory=lambda: os.getenv("DATA_DIR", "data/input"))
+    data_dir: str = field(default_factory=lambda: os.getenv("DATA_DIR", "data/input/yellow_trip"))
     input_file_base: str = field(default_factory=lambda: os.getenv("INPUT_FILE_BASE", "yellow_tripdata_2025-01"))
     input_is_parquet: bool = field(default_factory=lambda: os.getenv("INPUT_IS_PARQUET", "true").lower() == "true")
 
@@ -22,6 +22,8 @@ class Settings:
 
     # Datas e dtypes
     parse_dates: List[str] = field(default_factory=lambda: ["tpep_pickup_datetime", "tpep_dropoff_datetime"])
+    dim_table_zones_path: str = field(default_factory=lambda: os.getenv("DIM_TABLE_ZONES_PATH", "data/input/"))
+    table_zones_file: str = field(default_factory=lambda: os.getenv("ZONES_FILE", "taxi_zone_lookup"))
     pandas_dtypes: Dict[str, str] = field(default_factory=lambda: {
         "VendorID": "Int64",
         "passenger_count": "Int64",
@@ -42,6 +44,16 @@ class Settings:
         "Airport_fee": "float32",
     })
 
+    # Dim Table
+    dim_table_name: str = field(default_factory=lambda: os.getenv("DIM_TABLE_NAME", "dim_zone"))
+    export_dim_table: bool =  field(default_factory=lambda: os.getenv("EXPORT_DIM_TABLE", "false").lower() == "true")
+    dim_table_dtypes: Dict[str, str] = field(default_factory=lambda: {
+        'LocationID': 'Int64',
+        'Borough': 'string',
+        'Zone': 'string',
+        'service_zone': 'string'
+    })
+
     # Qualidade de dados
     critical_not_null: List[str] = field(default_factory=lambda: [
         "tpep_pickup_datetime", "tpep_dropoff_datetime", "PULocationID", "DOLocationID"
@@ -50,13 +62,16 @@ class Settings:
         "fare_amount", "extra", "mta_tax", "tip_amount", "tolls_amount", "Airport_fee",
         "improvement_surcharge", "total_amount", "congestion_surcharge"
     ])
+    max_trip_distance: float = field(default_factory=lambda: float(os.getenv("MAX_TRIP_DISTANCE", "300")))
 
     # DB (se for usar Postgres depois)
-    pg_host: str = field(default_factory=lambda: os.getenv("PG_HOST", "localhost"))
-    pg_port: int = field(default_factory=lambda: int(os.getenv("PG_PORT", "5432")))
-    pg_user: str = field(default_factory=lambda: os.getenv("PG_USER", "postgres"))
-    pg_password: str = field(default_factory=lambda: os.getenv("PG_PASSWORD", "postgres"))
-    pg_database: str = field(default_factory=lambda: os.getenv("PG_DATABASE", "uber"))
+    dev_db_params: Dict[str, any] = field(default_factory=lambda: {
+        "host": os.getenv("PG_HOST", "localhost"),
+        "port": int(os.getenv("PG_PORT", "5432")),
+        "dbname": os.getenv("PG_DATABASE", "uber_analisys"),
+        "user": os.getenv("PG_USER", "etl_process"),
+        "password": os.getenv("PG_PASSWORD", "postgres")
+    })
     
     # Arquitetura Medallion - Caminhos de saída
     output_path: str = field(default_factory=lambda: os.getenv("OUTPUT_PATH", "data/output"))
