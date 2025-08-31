@@ -71,7 +71,7 @@ with db_class(config=settings.dev_db_params) as db:
             df_bronze = get_data_in_parquet(path=settings.data_dir, file_name=file)
             logger.info("Processando dados para camada Bronze...")
             df_bronze_mapped = apply_bronze_column_mapping(df_bronze)
-            # db.load_dataframe_to_table(df=df_bronze_mapped, table_name="raw_trips_landing", schema="bronze")
+            db.load_dataframe_to_table(df=df_bronze_mapped, table_name="raw_trips_landing", schema="bronze")
 
             logger.info("Processando dados para camada Silver...")
             df_silver = filter_data_by_year_and_month(df=df_bronze, file_name=file)
@@ -84,7 +84,7 @@ with db_class(config=settings.dev_db_params) as db:
             df_silver_mapped = apply_silver_column_mapping(df_silver)
 
             db.load_dataframe_to_table(df=df_silver_mapped, table_name="fact_trips", schema="silver")
-            # db.truncate_table(table_name="raw_trips_landing", schema="bronze")
+            db.truncate_table(table_name="raw_trips_landing", schema="bronze")
             logger.success(f"Arquivo {file} processado com sucesso")
             db.execute_non_query(
                 """
