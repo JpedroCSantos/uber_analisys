@@ -50,8 +50,14 @@ def apply_bronze_column_mapping(df: pd.DataFrame) -> pd.DataFrame:
         pd.DataFrame: DataFrame com nomes padronizados para Bronze
     """
     logger.info("Aplicando mapeamento de colunas para Bronze...")
-    
-    # Identifica colunas que precisam ser renomeadas
+
+    if 'Airport_fee' in df.columns and 'airport_fee' in df.columns:
+        logger.warning("Colunas duplicadas detectadas: 'Airport_fee' e 'airport_fee'. Consolidando para 'airport_fee'.")
+        df['airport_fee'] = pd.to_numeric(df['airport_fee'], errors='coerce').fillna(
+            pd.to_numeric(df['Airport_fee'], errors='coerce')
+        )
+        df = df.drop(columns=['Airport_fee'])
+
     columns_to_rename = {
         old_name: new_name 
         for old_name, new_name in BRONZE_COLUMN_MAPPING.items() 
@@ -64,6 +70,11 @@ def apply_bronze_column_mapping(df: pd.DataFrame) -> pd.DataFrame:
     else:
         logger.info("Nenhuma coluna precisa ser renomeada para Bronze")
         df_renamed = df.copy()
+
+    if df_renamed.columns.duplicated().any():
+        dups = [col for col, dup in zip(df_renamed.columns, df_renamed.columns.duplicated()) if dup]
+        logger.warning(f"Removendo colunas duplicadas após renomeação: {dups}")
+        df_renamed = df_renamed.loc[:, ~df_renamed.columns.duplicated()]
     
     # logger.success(f"Mapeamento Bronze aplicado. Colunas finais: {list(df_renamed.columns)}")
     return df_renamed
@@ -80,7 +91,6 @@ def apply_silver_column_mapping(df: pd.DataFrame) -> pd.DataFrame:
     """
     logger.info("Aplicando mapeamento de colunas para Silver...")
     
-    # Identifica colunas que precisam ser renomeadas
     columns_to_rename = {
         old_name: new_name 
         for old_name, new_name in SILVER_COLUMN_MAPPING.items() 

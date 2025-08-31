@@ -125,6 +125,7 @@ celerybeat.pid
 
 # Environments
 .env
+*.env
 .venv
 venv/
 ENV/
@@ -170,6 +171,8 @@ cython_debug/
 logs/
 
 #input_files
+data/images
+data/images/*
 data/input/
 data/input/*
 data/output/

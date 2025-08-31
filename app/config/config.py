@@ -46,7 +46,7 @@ class Settings:
 
     # Dim Table
     dim_table_name: str = field(default_factory=lambda: os.getenv("DIM_TABLE_NAME", "dim_zone"))
-    export_dim_table: bool =  field(default_factory=lambda: os.getenv("EXPORT_DIM_TABLE", "false").lower() == "true")
+    export_dim_table: bool =  field(default_factory=lambda: os.getenv("EXPORT_DIM_TABLE", "true").lower() == "true")
     dim_table_dtypes: Dict[str, str] = field(default_factory=lambda: {
         'LocationID': 'Int64',
         'Borough': 'string',
@@ -63,6 +63,7 @@ class Settings:
         "improvement_surcharge", "total_amount", "congestion_surcharge"
     ])
     max_trip_distance: float = field(default_factory=lambda: float(os.getenv("MAX_TRIP_DISTANCE", "300")))
+    max_trip_duration: float = field(default_factory=lambda: float(os.getenv("MAX_TRIP_DURATION", "480"))) # 480 minutos = 8 horas
 
     # DB (se for usar Postgres depois)
     dev_db_params: Dict[str, any] = field(default_factory=lambda: {

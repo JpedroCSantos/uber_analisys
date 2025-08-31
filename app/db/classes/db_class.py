@@ -9,19 +9,22 @@ from typing import Dict, Optional
 from contextlib import contextmanager
 
 class db_class():
-    def __init__(self, config: Optional[str] = None):
-        self.params = self.get_db_params(config)
-        self._connection = None
-        self._is_connected = False
-        pass
-    
     def get_db_params(self, config: Optional[str] = None) -> Dict:
         return {
             "host": config["host"],
             "port": config["port"],
             "dbname": config["dbname"],
             "user": config["user"],
-            "password": config["password"]
+            "password": config["password"],
+
+            "connect_timeout": config.get("connect_timeout", 10),
+            "sslmode": config.get("sslmode", "require"),
+            "application_name": config.get("application_name", "etl_uber"),
+
+            "keepalives": config.get("keepalives", 1),
+            "keepalives_idle": config.get("keepalives_idle", 30),
+            "keepalives_interval": config.get("keepalives_interval", 10),
+            "keepalives_count": config.get("keepalives_count", 5),
         }
     
     def connect_db(self) -> str:
@@ -29,21 +32,36 @@ class db_class():
             logger.info("Conexão já está ativa")
             return
         
-        try:
-            logger.info("Conectando ao banco de dados PostgreSQL...")
-            self._connection = psycopg2.connect(**self.params)
-            self._connection.autocommit = False  # Controle manual de transações
-            self._is_connected = True
+        attempts = 0
+        last_error = None
+        while attempts < 3:
+            try:
+                logger.info("Conectando ao banco de dados PostgreSQL...")
+                self._connection = psycopg2.connect(**self.params)
+                self._connection.autocommit = False 
+                self._is_connected = True
 
-            with self._connection.cursor() as cur:
-                cur.execute("SELECT version();")
-                db_version = cur.fetchone()
-                logger.success(f"Conectado com sucesso! Versão: {db_version[0]}")
-            logger.success("Conexão estabelecida com sucesso")
-
-        except (Exception, psycopg2.DatabaseError) as error:
-            logger.error(f"Erro ao conectar ou operar no PostgreSQL: {error}")
-            raise
+                with self._connection.cursor() as cur:
+                    cur.execute("SELECT version();")
+                    db_version = cur.fetchone()
+                    logger.success(f"Conectado com sucesso! Versão: {db_version[0]}")
+                logger.success("Conexão estabelecida com sucesso")
+                return
+            except (psycopg2.OperationalError, psycopg2.InterfaceError) as error:
+                last_error = error
+                attempts += 1
+                wait_s = 120
+                logger.warning(f"Falha de conexão (tentativa {attempts}/3): {error}. Retentando em {wait_s}s...")
+                try:
+                    import time
+                    time.sleep(wait_s)
+                except Exception:
+                    pass
+            except (Exception, psycopg2.DatabaseError) as error:
+                last_error = error
+                logger.error(f"Erro ao conectar ou operar no PostgreSQL: {error}")
+                break
+        raise last_error
 
     def disconnect_db(self):
         """Fecha a conexão com o banco"""
@@ -120,7 +138,7 @@ class db_class():
         else:
             self._load_with_execute_values(df, table_name, schema)
 
-    def _load_with_execute_values(self, df: pd.DataFrame, table_name: str, schema: str = "public"):
+    def _load_with_execute_values(self, df: pd.DataFrame, table_name: str, schema: str = "public", size: int = 20000):
         """
         Carrega dados usando psycopg2.extras.execute_values
         Método confiável e performático para inserção em lote
@@ -132,7 +150,6 @@ class db_class():
         
         existing_columns = self._get_table_columns(table_name, schema)
         if existing_columns:
-            # Usa apenas a interseção entre colunas do DF e da tabela
             safe_columns = [c for c in df.columns if c in set(existing_columns)]
             if not safe_columns:
                 logger.error(f"Nenhuma coluna do DataFrame existe em {schema}.{table_name}. Colunas tabela={existing_columns}, df={list(df.columns)}")
@@ -148,7 +165,7 @@ class db_class():
         
         data_tuples = [tuple(row) for row in df_filtered.values]
         
-        with self.get_cursor(commit=True) as cur:
+        with self.get_cursor(commit=False) as cur:
             batch_size = 10000
             total_inserted = 0
             
@@ -162,10 +179,11 @@ class db_class():
                     template=f"({placeholders})",
                     page_size=batch_size
                 )
+                self._connection.commit()
                 
                 total_inserted += len(batch)
                 
-                if total_inserted % 50000 == 0 or total_inserted == len(data_tuples):
+                if total_inserted % size == 0 or total_inserted == len(data_tuples):
                     logger.info(f"Inseridos {total_inserted}/{len(data_tuples)} registros...")
         
         elapsed_time = time.time() - start_time
@@ -296,10 +314,44 @@ class db_class():
             return True
 
     def refresh_materialized_view(self, view_name: str, schema: str = "public"):
-        """Atualiza uma view materializada"""
+        """Atualiza uma view materializada com validação de existência e logs úteis"""
         logger.info(f"Atualizando view materializada {schema}.{view_name}")
+        is_matview = self.fetch_value(
+            """
+            SELECT 1
+            FROM pg_matviews
+            WHERE schemaname = %s AND matviewname = %s
+            LIMIT 1
+            """,
+            (schema, view_name)
+        )
+        if not is_matview:
+            is_view = self.fetch_value(
+                """
+                SELECT 1
+                FROM information_schema.views
+                WHERE table_schema = %s AND table_name = %s
+                LIMIT 1
+                """,
+                (schema, view_name)
+            )
+            if is_view:
+                logger.error(f"{schema}.{view_name} é uma VIEW normal, não materializada. Use CREATE MATERIALIZED VIEW para suportar REFRESH.")
+            else:
+                candidates = self.fetch_all(
+                    """
+                    SELECT schemaname, matviewname
+                    FROM pg_matviews
+                    WHERE matviewname ILIKE %s
+                    ORDER BY schemaname, matviewname
+                    LIMIT 10
+                    """,
+                    (f"%{view_name}%",)
+                )
+                logger.error(f"Materialized view {schema}.{view_name} não encontrada. Candidatas: {candidates}")
+            return False
+
         with self.get_cursor(commit=True) as cur:
-            cur.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
             cur.execute(f"REFRESH MATERIALIZED VIEW {schema}.{view_name};")
             logger.success(f"View materializada {schema}.{view_name} atualizada com sucesso")
             return True
@@ -361,15 +413,6 @@ class db_class():
         """
         self.executemany(sql, rows, batch_size=1000)
 
-    def __enter__(self):
-        """Suporte a context manager"""
-        self.connect_db()
-        return self
-    
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        """Cleanup automático no context manager"""
-        self.disconnect_db()
-    
     def setup_database_schema(self) -> bool:
         """
         Executa script SQL para criar schemas e tabelas necessárias.
@@ -392,12 +435,11 @@ class db_class():
             with open(file_path, 'r', encoding='utf-8') as file:
                 sql_commands = file.read()
             
-            # Separa comandos por ';' e executa individualmente
             commands = [cmd.strip() for cmd in sql_commands.split(';') if cmd.strip()]
             
             with self.get_cursor(commit=True) as cur:
                 for command in commands:
-                    if command:  # Ignora comandos vazios
+                    if command:
                         cur.execute(command)
                         
             logger.success(f"Script SQL executado com sucesso: {file_path}")
@@ -406,6 +448,20 @@ class db_class():
         except Exception as e:
             logger.error(f"Erro ao executar script SQL {file_path}: {e}")
             return False
+    
+    def __init__(self, config: Optional[str] = None):
+        self.params = self.get_db_params(config)
+        self._connection = None
+        self._is_connected = False
+
+    def __enter__(self):
+        """Suporte a context manager"""
+        self.connect_db()
+        return self
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Cleanup automático no context manager"""
+        self.disconnect_db()
 
     def __del__(self):
         """Cleanup no destructor"""
