@@ -76,6 +76,10 @@ Processar e analisar um dataset público de corridas para responder a um conjunt
 6. Idempotência (arquivos)
 - Preferência por mover arquivos landing→processed; no código atual, log transacional + conexão única.
 
+### Retenção na Bronze
+
+- Após a migração bem-sucedida para a Silver, aplicamos `TRUNCATE` na tabela Bronze. Os dados brutos permanecem acessíveis nos arquivos Parquet do projeto; como este é um portfólio com limitação de espaço, evitamos manter cópias duplicadas em disco e no banco. Em produção, a retenção da Bronze deve seguir políticas de auditoria, reprocessamento e custo de armazenamento.
+
 ---
 
 ## **Fonte de Dados:**

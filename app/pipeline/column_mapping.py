@@ -115,6 +115,56 @@ def get_silver_columns() -> list:
     """Retorna lista de colunas esperadas na camada Silver"""
     return list(SILVER_COLUMN_MAPPING.values())
 
+
+def get_silver_output_fact_columns() -> list:
+    return [
+        "vendor_id",
+        "passenger_count",
+        "trip_distance",
+        "ratecode_id",
+        "store_and_fwd_flag",
+        "payment_type",
+        "fare_amount",
+        "extra",
+        "mta_tax",
+        "tip_amount",
+        "tolls_amount",
+        "improvement_surcharge",
+        "congestion_surcharge",
+        "total_amount",
+        "airport_fee",
+        "pickup_at",
+        "dropoff_at",
+        "duration_minutes",
+        "hour_of_day",
+        "day_of_week",
+        "pu_location_id",
+        "do_location_id",
+        "cbd_congestion_fee",
+    ]
+
+
+def align_silver_output_columns(df: pd.DataFrame) -> pd.DataFrame:
+    cols = get_silver_output_fact_columns()
+    for c in cols:
+        if c not in df.columns:
+            df[c] = pd.NA
+    return df[cols]
+
+
+def get_silver_output_file_columns() -> list:
+    return ["trip_id"] + get_silver_output_fact_columns()
+
+
+def align_silver_output_file_columns(df: pd.DataFrame) -> pd.DataFrame:
+    df = df.reset_index(drop=True)
+    df["trip_id"] = df.index.astype("Int64")
+    cols = get_silver_output_file_columns()
+    for c in cols:
+        if c not in df.columns:
+            df[c] = pd.NA
+    return df[cols]
+
 def validate_columns_for_bronze(df: pd.DataFrame) -> bool:
     """
     Valida se o DataFrame tem as colunas necessárias para Bronze

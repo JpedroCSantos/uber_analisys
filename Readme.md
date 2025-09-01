@@ -72,6 +72,16 @@ Siga os passos abaixo para configurar o ambiente de desenvolvimento local.
     DIM_TABLE_ZONES_PATH=docs
     TABLE_ZONES_FILE=taxi_zone_lookup
     DIM_TABLE_DTYPES={"LocationID":"Int64","Borough":"string","Zone":"string","service_zone":"string"}
+    
+    # Execução do pipeline
+    EXPORT_TO_DB=false              # padrão: gerar CSV (sem precisar de Postgres)
+    OUTPUT_CSV_NAME=gold_trips.csv  # nome do CSV salvo em data/output/gold
+    OUTPUT_FORMAT=csv               # csv | parquet (padrão csv)
+    
+    # Amostragem para testes (quando true, exporta apenas SAMPLE_N linhas)
+    SAMPLE_ENABLED=true
+    SAMPLE_N=20000
+    SAMPLE_RANDOM_STATE=42
     ```
 
 5.  **Banco de dados (DDL):**
@@ -83,17 +93,72 @@ Siga os passos abaixo para configurar o ambiente de desenvolvimento local.
 
 O arquivo `app/main.py` orquestra todo o fluxo:
 
-1) Exporta a dimensão `silver.dim_zone` (upsert) a partir de `docs/taxi_zone_lookup.csv` (se `EXPORT_DIM_TABLE=true`).
+1) (Somente quando `EXPORT_TO_DB=true`) exporta a dimensão `silver.dim_zone` (upsert) a partir de `docs/taxi_zone_lookup.csv` se `EXPORT_DIM_TABLE=true`.
 2) Processa os arquivos Parquet do diretório `data/input` (podado via `list_files`).
 3) Bronze: leitura + mapeamento de colunas.
 4) Silver: derivação de colunas (`duration_minutes`, `hour_of_day`, `day_of_week`), tratamento de valores críticos e remoção de nulos críticos.
-5) Carga no Postgres usando `execute_values` (padrão), com commit por lote (10k linhas) em uma única conexão por execução.
-6) Refresh de materialized views na camada Gold.
+5) Salva um CSV pronto para consumo em `data/output/gold/gold_trips.csv`.
+6) (Opcional) Se `EXPORT_TO_DB=true`, carrega no Postgres via `execute_values` (commit por lote) e executa refresh das MVs na Gold.
 
 Para rodar:
 ```bash
 python app/main.py
 ```
+
+### Fluxos suportados
+
+- **Padrão (sem Postgres)**:
+  - Clone o repo, configure o ambiente e rode `python app/main.py`.
+  - O arquivo tratado estará em `data/output/gold/gold_trips.csv` (ou `.parquet` se `OUTPUT_FORMAT=parquet`).
+  - Se houver múltiplos arquivos Parquet, a saída é construída em modo append. Para CSV: cabeçalho apenas na primeira gravação. Para Parquet: concatena e regrava o arquivo.
+  - Para acelerar testes, use `SAMPLE_ENABLED=true` e ajuste `SAMPLE_N`.
+
+- **Avançado (com Postgres)**:
+  - Defina no `.env` as variáveis do banco (`PG_HOST`, `PG_PORT`, `PG_DATABASE`, `PG_USER`, `PG_PASSWORD`) e `EXPORT_TO_DB=true`.
+  - Rode `python app/main.py` para realizar a ingestão na Silver e o refresh das MVs na Gold.
+
+## 📊 Dashboard Interativo no Power BI
+
+Este projeto inclui um dashboard interativo no Power BI para visualização dos dados e análises da nossa pipeline de ETL. Para utilizá-lo, siga as instruções abaixo para carregar os dados tratados do seu ambiente local.
+
+Nota: A versão principal deste dashboard está publicada online [aqui](LINK_DO_DASHBOARD){:target="_blank"}. Siga as instruções abaixo apenas se você deseja abrir o arquivo localmente para analisar o modelo de dados ou os dados tratados em sua máquina.
+
+### 🛠️ Como Usar o Dashboard (Versão Local)
+
+O dashboard `uber_analisys.pbix` já está configurado para ler os arquivos de dados da camada gold do projeto. No entanto, o caminho para os arquivos precisa ser ajustado para o diretório da sua máquina.
+
+Siga estes 3 passos simples:
+
+1. **Abra o Arquivo:**
+   - Abra o arquivo `uber_analisys.pbix` no Power BI Desktop.
+
+2. **Abra o Editor de Consultas:**
+   - Na faixa de opções "Página Inicial", clique em "Transformar dados". Isso abrirá o Editor do Power Query.
+
+3. **Edite o Caminho do Projeto:**
+   - No painel "Consultas" à esquerda, procure e clique na consulta `pCaminhoProjeto`.
+   - Na barra de fórmulas, você verá o caminho atual.
+   - Edite o valor atual na barra de fórmulas para o caminho completo do seu projeto na sua máquina.
+
+   Exemplo de como o caminho deve ficar:
+
+   ```
+   C:\Users\NomeDoUsuario\CaminhoDoProjeto\
+   ```
+
+   Importante: Certifique-se de que o caminho termine com uma barra invertida `\` (ou uma barra normal `/`).
+
+4. **Carregue os Dados:**
+   - Após editar o caminho, vá para a faixa de opções "Página Inicial" e clique em "Fechar e Aplicar". O Power BI irá recarregar todos os dados a partir dos arquivos locais no caminho que você acabou de definir.
+
+### Scripts SQL (modo com Postgres)
+
+1. Estrutura base e permissões:
+   - Execute `sql/create_db_structure.sql` (unifica criação de roles, schemas, tabelas base e tabela de log, e concede `admin_role` ao usuário atual).
+2. Tabelas de dimensão adicionais e redefinição da fato:
+   - Execute `sql/create_dim_tables_and_update_fact.sql`.
+3. População de dimensões auxiliares:
+   - Execute `sql/INSERTS_DIM_TABLES.sql`.
 
 ---
 
@@ -118,6 +183,8 @@ python app/main.py
 - **Centralização de dtypes/parse**: `config.py` define perfis de importação (usecols, parse_dates, dtypes), garantindo consistência entre Bronze e Silver e reduzindo I/O.
 
 - **Logging simples em DEV**: `app/config/logging.py` cria sempre `logs/app.log` e console; produção pode usar JSONL.
+
+- **Bronze com TRUNCATE após carga**: após migrar com sucesso os dados para a Silver, executamos `TRUNCATE` na Bronze. Como os dados brutos já estão disponíveis em arquivos Parquet no repositório e este é um projeto de portfólio com restrição de espaço, optamos por não manter cópias redundantes no banco. Em ambientes produtivos, a retenção de Bronze deve seguir a política de governança/backup.
 
 ---
 

@@ -173,8 +173,10 @@ logs/
 #input_files
 data/images
 data/images/*
-data/input/
-data/input/*
+data/input/green_trip/
+data/input/green_trip/*
+data/input/yellow_trip/
+data/input/yellow_trip/*
 data/output/
 data/output/*
 

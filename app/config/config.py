@@ -11,6 +11,9 @@ def load_env() -> None:
 class Settings:
     app_env: str = field(default_factory=lambda: (os.getenv("APP_ENV") or os.getenv("ENV") or "DEV").upper())
 
+    # Modo de execução: por padrão, exporta CSV em vez de carregar no DB
+    export_to_db: bool = field(default_factory=lambda: os.getenv("EXPORT_TO_DB", "false").lower() == "true")
+    
     # Caminhos e arquivos
     data_dir: str = field(default_factory=lambda: os.getenv("DATA_DIR", "data/input/yellow_trip"))
     input_file_base: str = field(default_factory=lambda: os.getenv("INPUT_FILE_BASE", "yellow_tripdata_2025-01"))
@@ -19,6 +22,11 @@ class Settings:
     # Leitura e performance
     use_columns: Optional[List[str]] = field(default=None) 
     chunk_size_csv: Optional[int] = field(default_factory=lambda: int(os.getenv("CHUNK_SIZE_CSV", "0")) or None)
+
+    # Amostragem
+    sample_enabled: bool = field(default_factory=lambda: os.getenv("SAMPLE_ENABLED", "true").lower() == "true")
+    sample_n: int = field(default_factory=lambda: int(os.getenv("SAMPLE_N", "20000")))
+    sample_random_state: int = field(default_factory=lambda: int(os.getenv("SAMPLE_RANDOM_STATE", "42")))
 
     # Datas e dtypes
     parse_dates: List[str] = field(default_factory=lambda: ["tpep_pickup_datetime", "tpep_dropoff_datetime"])
@@ -79,6 +87,8 @@ class Settings:
     bronze_path: str = field(default_factory=lambda: os.getenv("BRONZE_PATH", "data/output/bronze"))
     silver_path: str = field(default_factory=lambda: os.getenv("SILVER_PATH", "data/output/silver"))
     gold_path: str = field(default_factory=lambda: os.getenv("GOLD_PATH", "data/output/gold"))
+    output_name: str = field(default_factory=lambda: os.getenv("OUTPUT_NAME", "gold_trips"))
+    output_format: str = field(default_factory=lambda: (os.getenv("OUTPUT_FORMAT", "csv").lower()))
     
     # Configurações de arquivo
     filename: str = field(default_factory=lambda: os.getenv("FILENAME", "uber_data"))

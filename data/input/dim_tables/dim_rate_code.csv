@@ -1,0 +1,9 @@
+rate_code_id,description
+1,Tarifa padrão
+2,JFK
+3,Newark
+4,Nassau ou Westchester
+5,Tarifa negociada
+6,Corrida em grupo
+99,Nulo/desconhecido
+
