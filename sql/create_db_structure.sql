@@ -69,6 +69,24 @@ CREATE TABLE IF NOT EXISTS bronze.raw_trips_landing (
 );
 ALTER TABLE bronze.raw_trips_landing OWNER TO admin_role;
 
+CREATE TABLE IF NOT EXISTS silver.dim_vendor (
+    vendor_id           SMALLINT PRIMARY KEY,
+    name                TEXT NOT NULL
+);
+ALTER TABLE silver.dim_vendor OWNER TO admin_role;
+
+CREATE TABLE IF NOT EXISTS silver.dim_rate_code (
+    rate_code_id        SMALLINT PRIMARY KEY,
+    description         TEXT NOT NULL
+);
+ALTER TABLE silver.dim_rate_code OWNER TO admin_role;
+
+CREATE TABLE IF NOT EXISTS silver.dim_payment_type (
+    payment_type_id     SMALLINT PRIMARY KEY,
+    description         TEXT NOT NULL
+);
+ALTER TABLE silver.dim_payment_type OWNER TO admin_role;
+
 CREATE TABLE IF NOT EXISTS silver.dim_zone (
   zone_id       SMALLINT PRIMARY KEY,
   borough       TEXT NOT NULL,
@@ -106,6 +124,11 @@ ALTER TABLE silver.fact_trips OWNER TO admin_role;
 
 CREATE TABLE IF NOT EXISTS silver.fact_trips_2025_01 PARTITION OF silver.fact_trips
     FOR VALUES FROM ('2025-01-01 00:00:00+00') TO ('2025-02-01 00:00:00+00');
+CREATE INDEX IF NOT EXISTS idx_fact_trips_pickup_at ON silver.fact_trips (pickup_at);
+CREATE INDEX IF NOT EXISTS idx_fact_trips_pu_location ON silver.fact_trips (pu_location_id);
+CREATE INDEX IF NOT EXISTS idx_fact_trips_do_location ON silver.fact_trips (do_location_id);
+CREATE INDEX IF NOT EXISTS idx_fact_trips_dow_hour ON silver.fact_trips (day_of_week, hour_of_day);
+CREATE INDEX IF NOT EXISTS idx_fact_trips_payment_type ON silver.fact_trips (payment_type);
 ALTER TABLE silver.fact_trips_2025_01 OWNER TO admin_role;
 
 CREATE TABLE IF NOT EXISTS bronze.etl_file_log (
@@ -140,8 +163,39 @@ GRANT SELECT ON ALL TABLES IN SCHEMA gold TO api_role;
 ALTER DEFAULT PRIVILEGES FOR ROLE admin_role IN SCHEMA gold
    GRANT SELECT ON TABLES TO api_role;
 
+DO $$
+BEGIN
+    INSERT INTO silver.dim_payment_type (payment_type_id, description) VALUES
+    (0, 'Tarifa Flex (Flex Fare)'),
+    (1, 'Cartão de crédito'),
+    (2, 'Dinheiro'),
+    (3, 'Sem cobrança'),
+    (4, 'Disputa'),
+    (5, 'Desconhecido'),
+    (6, 'Corrida anulada');
+END $$;
+
+DO $$
+BEGIN
+    INSERT INTO silver.dim_rate_code  (rate_code_id, description) VALUES
+    (1, 'Tarifa padrão'),
+    (2, 'JFK'),
+    (3, 'Newark'),
+    (4, 'Nassau ou Westchester'),
+    (5, 'Tarifa negociada'),
+    (6, 'Corrida em grupo'),
+    (99, 'Nulo/desconhecido');
+END $$;
+
+DO $$
+BEGIN
+    INSERT INTO silver.dim_vendor (vendor_id, name) VALUES
+    (1, 'Creative Mobile Technologies, LLC'),
+    (2, 'Curb Mobility, LLC'),
+    (3, 'Myle Technologies Inc'),
+    (4, 'Helix');
+END $$;
+
 -- =============================================================================
 -- FIM DO SCRIPT
 -- =============================================================================
-
-

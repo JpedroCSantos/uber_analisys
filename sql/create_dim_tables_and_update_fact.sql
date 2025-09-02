@@ -2,7 +2,7 @@
 -- SCRIPT DE CRIAÇÃO DAS TABELAS DE DIMENSÃO E FATO (VERSÃO FINAL)
 -- SGBD: PostgreSQL 15+
 -- Schema: silver
--- Projeto: UBER ANALISYS (OLAP)
+-- Projeto: TRIPS ANALYSIS (OLAP)
 -- =============================================================================
 
 -- |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

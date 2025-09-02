@@ -33,7 +33,7 @@ SILVER_PATH=data/output/silver
 GOLD_PATH=data/output/gold
 
 # Configurações de arquivo
-FILENAME=uber_data
+FILENAME=trip_data
 DELIMITER=,
 ```
 
@@ -105,9 +105,9 @@ O arquivo `main.py` demonstra um pipeline completo com **conexão única por exe
 ## Nomenclatura de Arquivos
 
 Os arquivos são salvos com sufixos indicando a camada:
-- `uber_data_bronze.csv`
-- `uber_data_silver.csv`
-- `uber_data_gold.csv`
+- `trips_data_bronze.csv`
+- `trips_data_silver.csv`
+- `trips_data_gold.csv`
 
 ## Benefícios
 

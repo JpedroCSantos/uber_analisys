@@ -1,4 +1,4 @@
--- Criação dos schemas e tabelas para o projeto Uber Analysis
+-- Criação dos schemas e tabelas para o projeto Trips Analysis
 -- Arquitetura Medallion: Bronze -> Silver -> Gold
 
 -- =================

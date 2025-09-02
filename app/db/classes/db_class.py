@@ -19,7 +19,7 @@ class db_class():
 
             "connect_timeout": config.get("connect_timeout", 10),
             "sslmode": config.get("sslmode", "require"),
-            "application_name": config.get("application_name", "etl_uber"),
+            "application_name": config.get("application_name", "etl_trips"),
 
             "keepalives": config.get("keepalives", 1),
             "keepalives_idle": config.get("keepalives_idle", 30),

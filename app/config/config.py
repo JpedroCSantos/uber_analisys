@@ -77,7 +77,7 @@ class Settings:
     dev_db_params: Dict[str, any] = field(default_factory=lambda: {
         "host": os.getenv("PG_HOST", "localhost"),
         "port": int(os.getenv("PG_PORT", "5432")),
-        "dbname": os.getenv("PG_DATABASE", "uber_analisys"),
+        "dbname": os.getenv("PG_DATABASE", "trips_analysis"),
         "user": os.getenv("PG_USER", "etl_process"),
         "password": os.getenv("PG_PASSWORD", "postgres")
     })
@@ -91,7 +91,7 @@ class Settings:
     output_format: str = field(default_factory=lambda: (os.getenv("OUTPUT_FORMAT", "csv").lower()))
     
     # Configurações de arquivo
-    filename: str = field(default_factory=lambda: os.getenv("FILENAME", "uber_data"))
+    filename: str = field(default_factory=lambda: os.getenv("FILENAME", "trips_data"))
     delimiter: str = field(default_factory=lambda: os.getenv("DELIMITER", ","))
     
     # Configurações de qualidade por camada

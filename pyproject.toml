@@ -1,7 +1,7 @@
 [project]
-name = "uber-analisys"
+name = "trip-analysis"
 version = "0.1.0"
-description = "Este projeto destina-se à análise de dados de corridas da Uber, seguindo o desafio técnico descrito em docs/PROJECT DOCUMENTATION.md."
+description = "Este projeto destina-se à análise de dados de corridas de taxis e limusines, seguindo o desafio técnico descrito em docs/PROJECT DOCUMENTATION.md."
 authors = [
     {name = "Joao Pedro Santos",email = "jpedro.csantos@hotmail.com"}
 ]

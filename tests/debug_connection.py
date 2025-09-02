@@ -17,7 +17,7 @@ def debug_connection(conn: Optional[psycopg2.connect] = None):
         params = {
             "host": os.getenv("PG_HOST", "localhost"),
             "port": int(os.getenv("PG_PORT", "5432")),
-            "dbname": os.getenv("PG_DATABASE", "uber_analisys"),
+            "dbname": os.getenv("PG_DATABASE", "trips_analysis"),
             "user": os.getenv("PG_USER", "etl_process"),
             "password": os.getenv("PG_PASSWORD", "postgres")
         }
