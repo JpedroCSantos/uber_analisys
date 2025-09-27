@@ -177,8 +177,12 @@ data/input/green_trip/
 data/input/green_trip/*
 data/input/yellow_trip/
 data/input/yellow_trip/*
-data/output/
-data/output/*
+# data/output/bronze
+data/output/bronze/*
+# data/output/silver
+data/output/silver/*
+# data/output/gold
+data/output/gold/*
 
 ### Python Patch ###
 # Poetry local configuration file - https://python-poetry.org/docs/configuration/#local-configuration
