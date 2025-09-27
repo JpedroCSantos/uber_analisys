@@ -1,23 +1,33 @@
-# app/pipeline/config.py
 import os
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional
 from dotenv import load_dotenv
 
+
 def load_env() -> None:
     load_dotenv(override=False)
 
-@dataclass(frozen=True)
-class Settings:
-    app_env: str = field(default_factory=lambda: (os.getenv("APP_ENV") or os.getenv("ENV") or "DEV").upper())
+load_env()
 
-    # Modo de execução: por padrão, exporta CSV em vez de carregar no DB
+@dataclass(frozen=False)
+class Settings:
+    def __post_init__(self):
+        """
+        Define o data_dir com base no ambiente, mas APENAS se ele
+        não foi definido explicitamente pela variável de ambiente DIR.
+        """
+        if self.data_dir is not None:
+            return
+        
+        if self.etl_mode == "DEMO":
+            self.data_dir = "data/input/demo_mode"
+        else:
+            self.data_dir = "data/input/yellow_trip"
+
+    data_dir: str = field(default_factory=lambda: os.getenv("DATA_DIR"))
     export_to_db: bool = field(default_factory=lambda: os.getenv("EXPORT_TO_DB", "false").lower() == "true")
-    
-    # Caminhos e arquivos
-    data_dir: str = field(default_factory=lambda: os.getenv("DATA_DIR", "data/input/yellow_trip"))
-    input_file_base: str = field(default_factory=lambda: os.getenv("INPUT_FILE_BASE", "yellow_tripdata_2025-01"))
-    input_is_parquet: bool = field(default_factory=lambda: os.getenv("INPUT_IS_PARQUET", "true").lower() == "true")
+    app_env: str = field(default_factory=lambda: (os.getenv("APP_ENV") or os.getenv("ENV") or "DEV").upper())
+    etl_mode: str = field(default_factory=lambda: os.getenv("ETL_MODE", "FULL"))
 
     # Leitura e performance
     use_columns: Optional[List[str]] = field(default=None) 
@@ -30,7 +40,7 @@ class Settings:
 
     # Datas e dtypes
     parse_dates: List[str] = field(default_factory=lambda: ["tpep_pickup_datetime", "tpep_dropoff_datetime"])
-    dim_table_zones_path: str = field(default_factory=lambda: os.getenv("DIM_TABLE_ZONES_PATH", "data/input/"))
+    dim_table_zones_path: str = field(default_factory=lambda: os.getenv("DIM_TABLE_ZONES_PATH", "data/input/taxi_zones"))
     table_zones_file: str = field(default_factory=lambda: os.getenv("ZONES_FILE", "taxi_zone_lookup"))
     pandas_dtypes: Dict[str, str] = field(default_factory=lambda: {
         "VendorID": "Int64",
@@ -71,9 +81,8 @@ class Settings:
         "improvement_surcharge", "total_amount", "congestion_surcharge"
     ])
     max_trip_distance: float = field(default_factory=lambda: float(os.getenv("MAX_TRIP_DISTANCE", "300")))
-    max_trip_duration: float = field(default_factory=lambda: float(os.getenv("MAX_TRIP_DURATION", "480"))) # 480 minutos = 8 horas
+    max_trip_duration: float = field(default_factory=lambda: float(os.getenv("MAX_TRIP_DURATION", "480")))
 
-    # DB (se for usar Postgres depois)
     dev_db_params: Dict[str, any] = field(default_factory=lambda: {
         "host": os.getenv("PG_HOST", "localhost"),
         "port": int(os.getenv("PG_PORT", "5432")),
@@ -116,5 +125,4 @@ class Settings:
         "business_rules": ["positive_amounts", "valid_coordinates"]
     })
 
-load_env()
 settings = Settings()
