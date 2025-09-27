@@ -1,0 +1,9 @@
+payment_type_id,description
+0,Tarifa Flex (Flex Fare)
+1,Cartão de crédito
+2,Dinheiro
+3,Sem cobrança
+4,Disputa
+5,Desconhecido
+6,Corrida anulada
+

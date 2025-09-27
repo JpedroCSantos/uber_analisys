@@ -11,8 +11,6 @@ FROM python:${PYTHON_VERSION}-slim
 WORKDIR /app
 COPY --from=builder /app/.venv /app/.venv
 COPY ./app .
-COPY ./data .
-COPY ./sql .
 ENV PATH="/app/.venv/bin:$PATH"
 ENV ETL_MODE=DEMO
 CMD ["python", "main.py"]
