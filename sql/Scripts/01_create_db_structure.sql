@@ -95,41 +95,42 @@ CREATE TABLE IF NOT EXISTS silver.dim_zone (
 ALTER TABLE silver.dim_zone OWNER TO admin_role;
 
 CREATE TABLE IF NOT EXISTS silver.fact_trips (
-  trip_id                 BIGINT GENERATED ALWAYS AS IDENTITY,
-  vendor_id               SMALLINT,
-  passenger_count         SMALLINT,
-  trip_distance           NUMERIC(7,3),
-  ratecode_id             SMALLINT,
-  store_and_fwd_flag      BOOLEAN,
-  payment_type            SMALLINT,
-  fare_amount             NUMERIC(10,2),
-  extra                   NUMERIC(10,2),
-  mta_tax                 NUMERIC(10,2),
-  tip_amount              NUMERIC(10,2),
-  tolls_amount            NUMERIC(10,2),
-  improvement_surcharge   NUMERIC(10,2),
-  congestion_surcharge    NUMERIC(10,2),
-  total_amount            NUMERIC(10,2),
-  airport_fee             NUMERIC(10,2),
-  pickup_at               TIMESTAMPTZ NOT NULL,
-  dropoff_at              TIMESTAMPTZ,
-  duration_minutes        NUMERIC(6,2),
-  hour_of_day             SMALLINT,
-  day_of_week             SMALLINT,
-  pu_location_id          SMALLINT REFERENCES silver.dim_zone(zone_id),
-  do_location_id          SMALLINT REFERENCES silver.dim_zone(zone_id),
-  cbd_congestion_fee      NUMERIC(10,2)
-) PARTITION BY RANGE (pickup_at);
-ALTER TABLE silver.fact_trips OWNER TO admin_role;
+    trip_id                 BIGINT GENERATED ALWAYS AS IDENTITY,
+    vendor_id               SMALLINT REFERENCES silver.dim_vendor(vendor_id),
+    passenger_count         SMALLINT CHECK (passenger_count >= 0 AND passenger_count <= 6),
+    trip_distance           NUMERIC(7,3) CHECK (trip_distance >= 0),
+    ratecode_id            	SMALLINT REFERENCES silver.dim_rate_code(rate_code_id),
+    store_and_fwd_flag      BOOLEAN,
+    payment_type	        SMALLINT REFERENCES silver.dim_payment_type(payment_type_id),
+    fare_amount             NUMERIC(10,2),
+    extra                   NUMERIC(10,2),
+    mta_tax                 NUMERIC(10,2),
+    tip_amount              NUMERIC(10,2),
+    tolls_amount            NUMERIC(10,2),
+    improvement_surcharge   NUMERIC(10,2),
+    congestion_surcharge    NUMERIC(10,2),
+    total_amount            NUMERIC(10,2),
+    airport_fee             NUMERIC(10,2),
+    cbd_congestion_fee      NUMERIC(10,2),
+    pickup_at               TIMESTAMPTZ NOT NULL,
+    dropoff_at              TIMESTAMPTZ NOT NULL,
+    duration_minutes        NUMERIC(6,2) CHECK (duration_minutes >= 0),
+    hour_of_day             SMALLINT CHECK (hour_of_day BETWEEN 0 AND 23),
+    day_of_week             SMALLINT CHECK (day_of_week BETWEEN 0 AND 6),
+    pu_location_id	        SMALLINT REFERENCES silver.dim_zone(zone_id),
+    do_location_id          SMALLINT REFERENCES silver.dim_zone(zone_id),
+	created_at              TIMESTAMPTZ DEFAULT NOW(),
 
-CREATE TABLE IF NOT EXISTS silver.fact_trips_2025_01 PARTITION OF silver.fact_trips
-    FOR VALUES FROM ('2025-01-01 00:00:00+00') TO ('2025-02-01 00:00:00+00');
+	PRIMARY KEY (pickup_at, trip_id)
+) PARTITION BY RANGE (pickup_at);
+
 CREATE INDEX IF NOT EXISTS idx_fact_trips_pickup_at ON silver.fact_trips (pickup_at);
 CREATE INDEX IF NOT EXISTS idx_fact_trips_pu_location ON silver.fact_trips (pu_location_id);
 CREATE INDEX IF NOT EXISTS idx_fact_trips_do_location ON silver.fact_trips (do_location_id);
 CREATE INDEX IF NOT EXISTS idx_fact_trips_dow_hour ON silver.fact_trips (day_of_week, hour_of_day);
 CREATE INDEX IF NOT EXISTS idx_fact_trips_payment_type ON silver.fact_trips (payment_type);
-ALTER TABLE silver.fact_trips_2025_01 OWNER TO admin_role;
+
+ALTER TABLE silver.fact_trips OWNER TO admin_role;
 
 CREATE TABLE IF NOT EXISTS bronze.etl_file_log (
     log_id              BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,

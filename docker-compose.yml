@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  postgres_db:
+    image: postgres:16-alpine
+    container_name: postgres_db
+    environment:
+      POSTGRES_USER: ${PG_USER}
+      POSTGRES_PASSWORD: ${PG_PASSWORD}
+      POSTGRES_DB: ${PG_DATABASE}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sql/Scripts:/docker-entrypoint-initdb.d
+    networks:
+      - taxis_network
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "8080:80"
+    depends_on:
+      - postgres_db
+    networks:
+      - taxis_network
+
+  etl_app:
+    image: taxis-pipeline:1.0
+    container_name: etl_app
+    build:
+      context: .
+      args:
+        - PYTHON_VERSION=${PYTHON_VERSION}
+    volumes:
+      - ./data:/app/data
+    env_file:
+      - .env
+    depends_on:
+      - postgres_db
+    networks:
+      - taxis_network
+
+volumes:
+  postgres_data:
+
+networks:
+  taxis_network:

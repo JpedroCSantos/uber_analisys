@@ -1,5 +1,6 @@
 # Análise de Dados de Corridas da cidade de Nova York
 
+
 Este projeto destina-se à análise de dados de corridas de taxis e limusines, seguindo o desafio técnico descrito em [`docs/PROJECT DOCUMENTATION.md`](docs/PROJECT%20DOCUMENTATION.md). O objetivo é realizar a ingestão, limpeza, transformação e análise de um dataset público para extrair insights valiosos.
 
 ##  Estrutura do Projeto

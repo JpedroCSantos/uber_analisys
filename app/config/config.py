@@ -125,4 +125,8 @@ class Settings:
         "business_rules": ["positive_amounts", "valid_coordinates"]
     })
 
+    # Database config
+    pg_sslmode: str = field(default_factory=lambda: os.getenv("PG_SSLMODE", "prefer"))
+    
+
 settings = Settings()

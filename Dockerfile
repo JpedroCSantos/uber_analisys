@@ -13,7 +13,5 @@ COPY --from=builder /app/.venv /app/.venv
 COPY ./app .
 ENV PATH="/app/.venv/bin:$PATH"
 ENV ETL_MODE=DEMO
-CMD ["python", "main.py"]
 
-# docker build --build-arg PYTHON_VERSION=$(cat .python-version) -t taxis-pipeline:1.0 .
-# docker run --name taxis-etl -e ETL_MODE=DEMO -v $(pwd)/data/output/gold:/app/output/gold taxis-pipeline:1.0
+CMD ["python", "main.py"]

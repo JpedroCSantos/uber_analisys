@@ -18,7 +18,7 @@ class db_class():
             "password": config["password"],
 
             "connect_timeout": config.get("connect_timeout", 10),
-            "sslmode": config.get("sslmode", "require"),
+            "sslmode": config.get("pg_sslmode", "prefer"),
             "application_name": config.get("application_name", "etl_trips"),
 
             "keepalives": config.get("keepalives", 1),
