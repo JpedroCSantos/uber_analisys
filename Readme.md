@@ -17,17 +17,66 @@ trip_analysis/
 └── Readme.md          # Este arquivo
 ```
 
-## Configuração do Ambiente
+## Execução com Docker (Recomendado)
 
-Siga os passos abaixo para configurar o ambiente de desenvolvimento local.
+Pré-requisitos:
+- Docker Desktop (ou Docker Engine) e Docker Compose v2 habilitado
 
-### Pré-requisitos
+1) Crie um arquivo `.env` na raiz do projeto (mínimo necessário):
+```bash
+# Ambiente
+APP_ENV=DEV
+LOG_LEVEL=INFO
+
+# Execução do pipeline (sem Postgres por padrão)
+EXPORT_TO_DB=false
+OUTPUT_FORMAT=csv
+OUTPUT_CSV_NAME=gold_trips.csv
+
+# Amostragem para testes
+SAMPLE_ENABLED=true
+SAMPLE_N=20000
+SAMPLE_RANDOM_STATE=42
+```
+
+2) (Opcional) Para usar Postgres via Docker/externo, adicione também:
+```bash
+PG_HOST=your-host
+PG_PORT=5432
+PG_DATABASE=trip_db
+PG_USER=postgres
+PG_PASSWORD=your_password
+
+# Parâmetros robustos (opcionais)
+APPLICATION_NAME=etl_trips
+CONNECT_TIMEOUT=10
+SSLMODE=require
+KEEPALIVES=1
+KEEPALIVES_IDLE=30
+KEEPALIVES_INTERVAL=10
+KEEPALIVES_COUNT=5
+```
+
+3) Suba os serviços:
+```bash
+docker compose up --build
+```
+
+O pipeline é executado dentro do container (equivalente a `python app/main.py`). Os artefatos de saída serão gravados em `data/output/gold/` e os logs em `logs/app.log`. Garanta que os volumes estejam mapeados no `docker-compose.yml` para persistir arquivos no host.
+
+---
+
+## Execução Local sem Docker (Opcional)
+
+Siga os passos abaixo apenas se você pretende executar localmente sem Docker.
+
+### Pré-requisitos (sem Docker)
 
 - Python 3.9+
 - Poetry (para gerenciamento de dependências)
 - Git
 
-### Instalação
+### Instalação (sem Docker)
 
 1.  **Clone o repositório:**
     ```bash
@@ -89,7 +138,56 @@ Siga os passos abaixo para configurar o ambiente de desenvolvimento local.
 
 ---
 
-## Execução do Pipeline
+## Execução com Docker (Recomendado)
+
+Pré-requisitos:
+- Docker Desktop (ou Docker Engine) e Docker Compose v2 habilitado
+
+1) Crie um arquivo `.env` na raiz do projeto (mínimo necessário):
+```bash
+# Ambiente
+APP_ENV=DEV
+LOG_LEVEL=INFO
+
+# Execução do pipeline (sem Postgres por padrão)
+EXPORT_TO_DB=false
+OUTPUT_FORMAT=csv
+OUTPUT_CSV_NAME=gold_trips.csv
+
+# Amostragem para testes
+SAMPLE_ENABLED=true
+SAMPLE_N=20000
+SAMPLE_RANDOM_STATE=42
+```
+
+2) (Opcional) Para usar Postgres via Docker/externo, adicione também:
+```bash
+PG_HOST=your-host
+PG_PORT=5432
+PG_DATABASE=trip_db
+PG_USER=postgres
+PG_PASSWORD=your_password
+
+# Parâmetros robustos (opcionais)
+APPLICATION_NAME=etl_trips
+CONNECT_TIMEOUT=10
+SSLMODE=require
+KEEPALIVES=1
+KEEPALIVES_IDLE=30
+KEEPALIVES_INTERVAL=10
+KEEPALIVES_COUNT=5
+```
+
+3) Suba os serviços:
+```bash
+docker compose up --build
+```
+
+O pipeline é executado dentro do container (equivalente a `python app/main.py`). Os artefatos de saída serão gravados em `data/output/gold/` e os logs em `logs/app.log`. Garanta que os volumes estejam mapeados no `docker-compose.yml` para persistir arquivos no host.
+
+---
+
+## Execução do Pipeline (Resumo)
 
 O arquivo `app/main.py` orquestra todo o fluxo:
 
